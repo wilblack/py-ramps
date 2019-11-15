@@ -23,4 +23,4 @@ Activate the virtualenv and run
 python roller.py
 ```
 
-Output goes in `output/roller.py`
+Output goes in `output/`
