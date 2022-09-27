@@ -1,4 +1,5 @@
 ## Set up
+
 This is a Python 3 project.
 
 1. Clone the repo
@@ -17,10 +18,10 @@ pip install -r requirements.txt
 ```
 
 ## Run the script
+
 Activate the virtualenv and run
 
 ```
-python roller.py
 
 python roller_12ft_by_18in.py
 ```

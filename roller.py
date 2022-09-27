@@ -1,8 +1,7 @@
 import os
+from math import atan, cos, floor, pi, sin, sqrt
 
-from math import sin, cos, pi, sqrt, floor, atan
-from PIL import Image, ImageDraw, ImageFont
-
+from PIL import Image, ImageDraw
 
 LINE_WIDTH = 100
 LINE_WIDTH_THIN = 20
@@ -11,20 +10,6 @@ TO_RADIANS = pi / 180.0
 
 def dist(p1, p2):
     return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
-
-
-class RampBase():
-
-    def add_text(self, rows):
-        font_size = 100
-        row_height = self.inches(1.2)
-        padding_bottom = self.inches(2)
-        font = ImageFont.truetype("Helvetica.ttc", font_size)
-        for i, row in enumerate(rows):
-            x = self.inches(36)
-            y = self.Y - len(rows) * row_height - padding_bottom + i * row_height
-            print("Adding text {0}".format(row))
-            self.draw.text((x, y),row,(0,0,0),font=font)
 
 
 
@@ -80,6 +65,10 @@ class Roller(RampBase):
 
         self.image = image if image else Image.new(self.mode, self.size, self.color)
 
+        if not os.path.exists(config.output_dir):
+            print(f"output directory ${config.output_dir} does not exist so making it.")
+            os.mkdir(config.output_dir)
+
     def draw_image(self):
         self.draw = ImageDraw.Draw(self.image)
 
@@ -123,8 +112,6 @@ class Roller(RampBase):
             y.append(_y)
         return points, x, y
 
-    def inches(self, value):
-        return value * self.config.pixels_per_inch
 
     # def rung(self, p1, p2):
     #     self.draw.line([p1, p2], fill=black, width=30)
