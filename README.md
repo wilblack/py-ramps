@@ -21,6 +21,8 @@ Activate the virtualenv and run
 
 ```
 python roller.py
+
+python roller_12ft_by_18in.py
 ```
 
 Output goes in `output/`

@@ -1,77 +1,209 @@
 import os
 
-from math import sin, pi, sqrt
-from PIL import Image, ImageDraw
+from math import sin, cos, pi, sqrt, floor, atan
+from PIL import Image, ImageDraw, ImageFont
 
 
-def inches(value):
-    return value * PIXELS_PER_INCH
-
-def rung(p1, p2):
-    draw.line([p1, p2], fill=black, width=30)
+LINE_WIDTH = 100
+LINE_WIDTH_THIN = 20
+TO_DEGREES = 180.0 / pi
+TO_RADIANS = pi / 180.0
 
 def dist(p1, p2):
     return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
 
-#########################################################
-LENGTH_IN_FEET = 8
-HEIGHT_IN_INCHES = 18
-FNAME = "roller_{0}ft_by_{1}in.png".format(LENGTH_IN_FEET, HEIGHT_IN_INCHES)
-OUT_DIR = 'output'
-if not os.path.isdir(OUT_DIR):
-    os.mkdir(OUT_DIR)
-OUT_PATH = os.path.join(OUT_DIR, FNAME)
+class RampBase():
 
-PIXELS_PER_INCH = 100
-X = LENGTH_IN_FEET * 12 * PIXELS_PER_INCH
-Y = 4 * 12 * PIXELS_PER_INCH
-
-A = inches(HEIGHT_IN_INCHES / 2.0)
-w = 2 * pi / X
-H = A
-Y_OFFSET = inches(1.5)
-phase = pi / 2
-#########################################################
+    def add_text(self, rows):
+        font_size = 100
+        row_height = self.inches(1.2)
+        padding_bottom = self.inches(2)
+        font = ImageFont.truetype("Helvetica.ttc", font_size)
+        for i, row in enumerate(rows):
+            x = self.inches(36)
+            y = self.Y - len(rows) * row_height - padding_bottom + i * row_height
+            print("Adding text {0}".format(row))
+            self.draw.text((x, y),row,(0,0,0),font=font)
 
 
 
-size = (X, Y)
-mode = 'RGB'
-color = 'white'
-width = 10
-img = Image.new(mode, size, color)
-draw = ImageDraw.Draw(img)
+class RollerConfig():
+    def __init__(self, length_in_inches, height_inches, output_dir=None, filename=None,
+        pixels_per_inch=100, mode='RGB', show_rungs=True, show_frame=True, add_text=True, rung_width=5.5):
 
-points = []
-x = []
-y = []
-for i in range(X):
-    _y = A * sin(w * i + phase) + (Y - H) - Y_OFFSET
-    points.append((i ,_y))
-    x.append(i)
-    y.append(_y)
+        self.L = length_in_inches
+        self.H = height_inches
+        self.LENGTH_IN_FEET = self.L / 12.0
+        self.output_dir = output_dir if output_dir else "output"
+        self.filename = filename if filename else "roller_{0}ft_by_{1}in.png".format(self.LENGTH_IN_FEET, self.H)
+        self.pixels_per_inch = pixels_per_inch
+        self.mode = mode
+        self.show_rungs = show_rungs
+        self.show_frame = show_frame
+        self.rung_width = rung_width
+        self.add_text = add_text
 
+class MultiDrawRollers():
+    def __init__(self, configs):
 
-p1 = (x[0], y[0])
-in_gap = False
-for i in range(X):
-    p2 = (x[i], y[i])
-    if in_gap:
-        if dist(p1, p2) > inches(1.5):
-            print("leaving gap")
-            in_gap = False
-            p1 = p2
+        self.image = Image.new('RGB', self.size, 'white')
+        self.rollers = []
+        for config in configs:
+            self.rollers.append(Roller(config, image))
 
-    if not in_gap and dist(p1, p2) > inches(3.5):
-        print("entering gap", dist(p1, p2))
-        in_gap = True
-        print(p1)
-        print(p2)
-        print ([p1, p2])
-        draw.line([p1, p2], fill='red', width=100)
-        p1 = p2
+    def draw_image(self, ):
+        for roller in self.rollers:
+            roller.draw_image()
 
 
-draw.line(points, fill='black', width=width)
-img.save(OUT_PATH)
+class Roller(RampBase):
+    def __init__(self, config, image=None):
+        self.config = config
+        self.X = int(config.LENGTH_IN_FEET * 12 * config.pixels_per_inch)
+        self.Y = int(4 * 12 * config.pixels_per_inch)
+        self.x = []
+        self.y = []
+        self.points = []
+        self.A = self.inches(config.H / 2.0)
+        self.w = 2 * pi / self.X
+        self.H = self.A
+        self.Y_OFFSET = self.inches(1.5)
+        self.phase = pi / 2
+        self.OUT_PATH = os.path.join(config.output_dir, config.filename)
+        self.rung_count = 0
+
+        self.size = (self.X, self.Y)
+        self.mode = config.mode
+        self.color = 'white'
+        self.fill_width = 10
+
+        self.image = image if image else Image.new(self.mode, self.size, self.color)
+
+    def draw_image(self):
+        self.draw = ImageDraw.Draw(self.image)
+
+        self.points, self.x, self.y = self.compute_curve()
+        self.draw.line(self.points, fill='black', width=self.fill_width)
+        if self.config.show_rungs:
+            self.add_rungs()
+
+        if self.config.show_frame:
+            self.render_frame()
+
+        self.render_grid()
+        if self.config.add_text:
+            rows = [
+                "Length: {0} feet".format(self.config.L / 12.0),
+                "Max Height: {0} inches".format(self.config.H),
+                "Max Slope: {0:.2f}".format(self.max_slope())
+            ]
+            if self.config.show_rungs:
+                rows.extend([
+                    "Number of Rungs: {0}".format(self.rung_count),
+                    "Rung Width: {0}".format(self.config.rung_width)
+                ])
+
+            self.add_text(rows)
+        self.image.save(self.OUT_PATH)
+
+    def max_slope(self):
+        mid_point = floor(len(self.x) / 4)
+        slope =  self.A * self.w
+        return atan(slope) * TO_DEGREES
+
+    def compute_curve(self):
+        points = []
+        x = []
+        y = []
+        for i in range(self.X):
+            _y = self.A * sin(self.w * i + self.phase) + (self.Y - self.H) - self.Y_OFFSET
+            points.append((i ,_y))
+            x.append(i)
+            y.append(_y)
+        return points, x, y
+
+    def inches(self, value):
+        return value * self.config.pixels_per_inch
+
+    # def rung(self, p1, p2):
+    #     self.draw.line([p1, p2], fill=black, width=30)
+
+    def add_rungs(self):
+        p1 = (self.x[0], self.y[0])
+        in_gap = False
+        for i in range(self.X):
+            p2 = (self.x[i], self.y[i])
+            if in_gap:
+                if dist(p1, p2) > self.inches(1.5):
+                    in_gap = False
+                    p1 = p2
+
+            if not in_gap and dist(p1, p2) > self.inches(self.config.rung_width):
+                in_gap = True
+                self.draw.line([p1, p2], fill='red', width=LINE_WIDTH)
+                self.rung_count = self.rung_count + 1
+                p1 = p2
+
+
+    def rotate(self, point, angle):
+        out = (
+            point[0] * cos(angle) - point[1] * sin(angle),
+            point[1] * cos(angle) + point[0] * sin(angle)
+        )
+        print("point ", point)
+        print("rotated ", out)
+        return out
+
+    def translate(self, point, anchor):
+        return (point[0] + anchor[0], point[1] + anchor[1])
+
+    def render_beam(self, anchor, length, width, angle):
+        points = [
+            (0, 0),
+            (length, 0),
+            (length, width),
+            (0, width)
+        ]
+
+        # rotate
+        points = [self.rotate(p, angle) for p in points]
+
+        # translate
+        points = [self.translate(p, anchor) for p in points]
+
+        self.draw.line([points[0], points[1]], fill='red', width=LINE_WIDTH_THIN)
+        self.draw.line([points[1], points[2]], fill='red', width=LINE_WIDTH_THIN)
+        self.draw.line([points[2], points[3]], fill='red', width=LINE_WIDTH_THIN)
+        self.draw.line([points[3], points[0]], fill='red', width=LINE_WIDTH_THIN)
+
+    def get_midpoint(self):
+
+        index = floor(len(self.x) / 2)
+        print("len(self.x)", len(self.x))
+        print("mid index", index)
+        return (self.x[index], self.y[index])
+
+    def render_frame(self):
+        mid = self.get_midpoint()
+        anchor = (mid[0], mid[1] - 3 * self.config.pixels_per_inch)
+        angle = 16 * TO_RADIANS
+        length = 8 * 12.0 * self.config.pixels_per_inch
+        width = 11.5  * self.config.pixels_per_inch
+
+        self.render_beam(anchor, length, width, angle)
+        self.render_beam(anchor, -length, width, -angle)
+
+
+
+
+    def render_grid(self):
+        delta_x = 12.0 * self.config.pixels_per_inch
+        delta_y = delta_x
+        while delta_x < self.X:
+            self.draw.line([(delta_x, 0), (delta_x, self.Y)], fill='grey', width=LINE_WIDTH_THIN)
+            delta_x = delta_x + 12.0 * self.config.pixels_per_inch
+
+        while delta_y < self.Y:
+            self.draw.line([(0, delta_y), (self.X, delta_y)], fill='grey', width=LINE_WIDTH_THIN)
+            delta_y = delta_y + 12.0 * self.config.pixels_per_inch
