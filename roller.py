@@ -1,7 +1,9 @@
 import os
-from math import atan, cos, floor, pi, sin, sqrt
+from math import atan, floor, pi, sin, sqrt
 
 from PIL import Image, ImageDraw
+
+from ramp_base import BaseConfig, RampBase
 
 LINE_WIDTH = 100
 LINE_WIDTH_THIN = 20
@@ -13,21 +15,17 @@ def dist(p1, p2):
 
 
 
-class RollerConfig():
-    def __init__(self, length_in_inches, height_inches, output_dir=None, filename=None,
-        pixels_per_inch=100, mode='RGB', show_rungs=True, show_frame=True, add_text=True, rung_width=5.5):
-
+class RollerConfig(BaseConfig):
+    def __init__(self, length_in_inches, height_inches, output_dir=None, filename=None,pixels_per_inch=100, mode='RGB', show_rungs=True, show_frame=True, add_text=True, rung_width=5.5):
         self.L = length_in_inches
         self.H = height_inches
         self.LENGTH_IN_FEET = self.L / 12.0
-        self.output_dir = output_dir if output_dir else "output"
-        self.filename = filename if filename else "roller_{0}ft_by_{1}in.png".format(self.LENGTH_IN_FEET, self.H)
-        self.pixels_per_inch = pixels_per_inch
-        self.mode = mode
+        filename = filename if filename else "roller_{0}ft_by_{1}in.png".format(self.LENGTH_IN_FEET, self.H)
+        output_dir = output_dir if output_dir else "output"
         self.show_rungs = show_rungs
-        self.show_frame = show_frame
         self.rung_width = rung_width
-        self.add_text = add_text
+
+        super().__init__(filename, output_dir, pixels_per_inch, mode=mode, show_frame=show_frame, add_text=add_text)
 
 class MultiDrawRollers():
     def __init__(self, configs):
@@ -44,9 +42,11 @@ class MultiDrawRollers():
 
 class Roller(RampBase):
     def __init__(self, config, image=None):
+
+
         self.config = config
-        self.X = int(config.LENGTH_IN_FEET * 12 * config.pixels_per_inch)
-        self.Y = int(4 * 12 * config.pixels_per_inch)
+        self.X = int(config.LENGTH_IN_FEET * 12 * config.pixels_per_inch) # Total number of pixels of the feature in the horizontal
+        self.Y = int(4 * 12 * config.pixels_per_inch)                     # Total number of pixels in the vertical
         self.x = []
         self.y = []
         self.points = []
@@ -101,7 +101,7 @@ class Roller(RampBase):
         slope =  self.A * self.w
         return atan(slope) * TO_DEGREES
 
-    def compute_curve(self):
+    def compute_curve(self) -> tuple[list[tuple[float, float]], list[float], list[float]]:
         points = []
         x = []
         y = []
@@ -133,36 +133,6 @@ class Roller(RampBase):
                 p1 = p2
 
 
-    def rotate(self, point, angle):
-        out = (
-            point[0] * cos(angle) - point[1] * sin(angle),
-            point[1] * cos(angle) + point[0] * sin(angle)
-        )
-        print("point ", point)
-        print("rotated ", out)
-        return out
-
-    def translate(self, point, anchor):
-        return (point[0] + anchor[0], point[1] + anchor[1])
-
-    def render_beam(self, anchor, length, width, angle):
-        points = [
-            (0, 0),
-            (length, 0),
-            (length, width),
-            (0, width)
-        ]
-
-        # rotate
-        points = [self.rotate(p, angle) for p in points]
-
-        # translate
-        points = [self.translate(p, anchor) for p in points]
-
-        self.draw.line([points[0], points[1]], fill='red', width=LINE_WIDTH_THIN)
-        self.draw.line([points[1], points[2]], fill='red', width=LINE_WIDTH_THIN)
-        self.draw.line([points[2], points[3]], fill='red', width=LINE_WIDTH_THIN)
-        self.draw.line([points[3], points[0]], fill='red', width=LINE_WIDTH_THIN)
 
     def get_midpoint(self):
 
@@ -184,13 +154,3 @@ class Roller(RampBase):
 
 
 
-    def render_grid(self):
-        delta_x = 12.0 * self.config.pixels_per_inch
-        delta_y = delta_x
-        while delta_x < self.X:
-            self.draw.line([(delta_x, 0), (delta_x, self.Y)], fill='grey', width=LINE_WIDTH_THIN)
-            delta_x = delta_x + 12.0 * self.config.pixels_per_inch
-
-        while delta_y < self.Y:
-            self.draw.line([(0, delta_y), (self.X, delta_y)], fill='grey', width=LINE_WIDTH_THIN)
-            delta_y = delta_y + 12.0 * self.config.pixels_per_inch
