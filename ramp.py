@@ -26,9 +26,9 @@ class RampConfig(BaseConfig):
         self.angle_radian = self.angle_degree * math.pi / 180.0
 
         if (radius_inches):
-            filename = f"ramp_a{self.angle_degree}_h{height_inches}.png"
+            filename = f"ramp_a{angle_degree}_r{radius_inches}.png"
         elif (height_inches):
-            filename = f"ramp_r{radius_inches}_h{height_inches}.png"
+            filename = f"ramp_r{angle_degree}_h{height_inches}.png"
         else:
             raise Exception("You must provide a radius or a height in inches")
 
@@ -96,9 +96,10 @@ class Ramp(RampBase):
         if (angle_radian < 0 or angle_radian > math.pi / 2.0):
             raise Exception(f"Angle must be between 0 and pi / 4 radians. You gave ${angle_radian}")
         theta = math.pi / 2.0 - angle_radian
-        l = math.cos(theta)
         r = height_inches / (1 - math.sin(theta))
-        return [height_inches, l * r, r, theta]
+        l = r * math.cos(theta)
+        
+        return [height_inches, l, r, theta]
     
 
 
@@ -109,7 +110,7 @@ class Ramp(RampBase):
         theta = math.pi / 2.0 - angle_radian
         h = radius_inches - radius_inches * math.sin(theta) 
         l = radius_inches * math.cos(theta) 
-        return [h, l, theta]
+        return [h, l, radius_inches, theta]
 
 
 
