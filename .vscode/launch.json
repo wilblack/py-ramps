@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "type": "aws-sam",
+      "request": "direct-invoke",
+      "name": "py-ramps:KickerFunction",
+      "invokeTarget": {
+        "target": "template",
+        "templatePath": "${workspaceFolder}/template.yaml",
+        "logicalId": "KickerFunction"
+      },
+      "lambda": {
+        "payload": {
+          "json": {
+            "angle": 10,
+            "height": 3
+          }
+        },
+        "environmentVariables": {}
+      }
+    }
+  ]
+}

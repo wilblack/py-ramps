@@ -3,7 +3,7 @@ from math import atan, floor, pi, sin, sqrt
 
 from PIL import Image, ImageDraw
 
-from ramp_base import BaseConfig, RampBase
+from ramp_base_org import BaseConfig, RampBase
 
 LINE_WIDTH = 100
 LINE_WIDTH_THIN = 20

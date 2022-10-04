@@ -6,7 +6,7 @@ from typing import Optional
 
 from PIL import Image, ImageDraw
 
-from ramp_base import LINE_WIDTH_THIN, BaseConfig, RampBase
+from ramp_base_org import LINE_WIDTH_THIN, BaseConfig, RampBase
 
 
 def format_float(f: float):
@@ -90,7 +90,7 @@ class Ramp(RampBase):
             "arclength_feet": format_float(self.theta_radian * self.radius_feet) 
 
         }
-        self.draw_image()
+        # self.draw_image()
 
     def compute_radius(self, angle_radian: float, height_inches: float):
         if (angle_radian < 0 or angle_radian > math.pi / 2.0):
@@ -127,19 +127,6 @@ class Ramp(RampBase):
         #     self.render_frame()
 
         self.render_grid()
-        # if self.config.add_text:
-        #     rows = [
-        #         "Length: {0} feet".format(self.config.L / 12.0),
-        #         "Max Height: {0} inches".format(self.config.H),
-        #         "Max Slope: {0:.2f}".format(self.max_slope())
-        #     ]
-        #     if self.config.show_rungs:
-        #         rows.extend([
-        #             "Number of Rungs: {0}".format(self.rung_count),
-        #             "Rung Width: {0}".format(self.config.rung_width)
-        #         ])
-
-        #     self.add_text(rows)
         self.image.save(self.OUT_PATH)
 
 
