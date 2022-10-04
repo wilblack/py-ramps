@@ -12,8 +12,10 @@
       "lambda": {
         "payload": {
           "json": {
-            "angle": 10,
-            "height": 3
+            "queryStringParameters": {
+              "angle": 50,
+              "height": 7
+            }
           }
         },
         "environmentVariables": {}

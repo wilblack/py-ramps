@@ -8,6 +8,12 @@ See https://docs.aws.amazon.com/serverless-application-model/latest/developergui
 3. Install Homebrew. Using 3.6.1 at time of writing
 4. Instal AWS SAM CLI
 
+# Debugging
+
+- Install the AWS Toolkit for VSCode
+
+-
+
 # Deploying
 
 - Validate template `sam validate`

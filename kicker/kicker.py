@@ -1,22 +1,21 @@
+import io
 import json
 import math
 import os
 from typing import Optional
 
+import boto3
 from PIL import Image, ImageDraw
 
-from ramp_base import LINE_WIDTH_THIN, BaseConfig, RampBase
+from ramp_base import BaseConfig, RampBase, format_float
+
+BUCKET_NAME = "mtb-ramps"
 
 
-def format_float(f: float):
-    if isinstance(f, float):
-        return float(f"{f:.1}")
-    else:
-        return f
 
 class KickerConfig(BaseConfig):
     def __init__(self, angle_degree: float, radius_inches: Optional[float] = None, height_inches: Optional[float] = None, output_dir=None, filename=None,
-        pixels_per_inch=10, mode='RGB', show_rungs=True, show_frame=True, add_text=True, rung_width=5.5):
+        pixels_per_inch=20, mode='RGB', show_rungs=True, show_frame=True, add_text=True, rung_width=5.5):
         
 
         self.radius_inches = radius_inches
@@ -64,9 +63,10 @@ class Kicker(RampBase):
         self.theta_radian = theta
         self.theta_degree = self.theta_radian * 180.0 / math.pi
         
-        print("in Kicker 2")
         self.X = int(self.length_feet * 12 * config.pixels_per_inch)
         self.Y = int(self.height_feet * 12 * config.pixels_per_inch)
+        self.x = []
+        self.y = []
         self.OUT_PATH = os.path.join(config.output_dir, config.filename)
         
         self.size = (self.X, self.Y)
@@ -77,7 +77,7 @@ class Kicker(RampBase):
         self.image = image if image else Image.new(self.mode, self.size, self.color)
         print("in Kicker 4")
 
-        print(f"Height: {self.height_feet:.1f} Length: {self.length_feet:.1f} Radius: {self.radius_feet:.1f} Angle: {config.angle_degree} Theta: {self.theta_degree: .1f}")
+        print(f"Height: {self.height_inches:.1f} Length: {self.length_feet:.1f} Radius: {self.radius_feet:.1f} Angle: {config.angle_degree} Theta: {self.theta_degree: .1f}")
         self.stats = {
             "height_feet": format_float(self.height_feet),
             "height_inches": format_float(self.height_inches),
@@ -87,17 +87,15 @@ class Kicker(RampBase):
             "radius_inches": format_float(self.radius_inches),
             "takeoff_angle_degrees": format_float(self.config.angle_degree),
             "takeoff_angle_radians": format_float(self.config.angle_radian),
-            "subtended_angle_degrees": format_float(self.theta_degree),
-            "subtended_angle_radians": format_float(self.theta_radian),
-            "arclength_inches": format_float(self.theta_radian * self.radius_inches),
-            "arclength_feet": format_float(self.theta_radian * self.radius_feet) 
+            "arclength_inches": format_float(self.config.angle_radian * self.radius_inches),
+            "arclength_feet": format_float(self.config.angle_radian * self.radius_feet) 
 
         }
         print(json.dumps(self.stats))
         
 
     def compute_radius(self, angle_radian: float, height_inches: float):
-        print("in compute_radius")
+        print(f"in compute_radius height: {height_inches}")
         if (angle_radian < 0 or angle_radian > math.pi / 2.0):
             raise Exception(f"Angle must be between 0 and pi / 4 radians. You gave ${angle_radian}")
         theta = math.pi / 2.0 - angle_radian
@@ -126,18 +124,51 @@ class Kicker(RampBase):
         self.draw = ImageDraw.Draw(self.image)
 
         self.points, self.x, self.y = self.compute_curve()
+        self.render_grid()
         self.draw.line(self.points, fill='black', width=self.fill_width)
-        # if self.config.show_rungs:
-        #     self.add_rungs()
+        
+
+
+        text_rows = [
+            f"Height (ft): {self.stats['height_feet']}",
+            f"Length (ft): {self.stats['length_feet']}",
+            f"Ramp Length (ft): {self.stats['arclength_feet']}",
+            f"Takeoff Angle (degrees): {self.stats['takeoff_angle_degrees']}"
+        ]
+        if self.config.show_rungs:
+            rung_count = self.add_rungs()
+            text_rows.append(f"Rungs: {rung_count}")
+            
+        if self.config.add_text:
+            self.add_text(text_rows)
+
 
         # if self.config.show_frame:
         #     self.render_frame()
 
-        self.render_grid()
-        self.save_image()
 
 
-    def save_image(self):
+
+    def save_image_s3(self):
+        s3 = boto3.client('s3')
+        io_stream = io.BytesIO()
+        self.image.save(io_stream, format="PNG")
+        io_stream.seek(0)
+
+        s3.upload_fileobj(
+            io_stream, # This is what i am trying to upload
+            BUCKET_NAME,
+            self.OUT_PATH,
+            ExtraArgs={
+                'ACL': 'public-read'
+            }
+        )
+        url = f"https://{BUCKET_NAME}.s3.us-west-2.amazonaws.com/{self.OUT_PATH}"
+        self.stats.update({"url": url})
+
+        return url
+
+    def save_image_local(self):
         if not os.path.exists(self.config.output_dir):
             # Create path
             os.makedirs(self.config.output_dir)
@@ -151,8 +182,8 @@ class Kicker(RampBase):
         y = []
         # import pdb; pdb.set_trace()
 
-        dt = (math.pi / 2  - self.theta_radian) / 100
-        for i in range(100):
+        dt = (math.pi / 2  - self.theta_radian) / float(self.X)
+        for i in range(self.X):
             theta = math.pi / 2  - dt * i
             _x = self.inches(self.radius_inches * math.cos(theta))
             _y = self.inches(self.height_inches) - self.inches(self.radius_inches) + self.inches(self.radius_inches * math.sin(theta)) 
@@ -160,22 +191,3 @@ class Kicker(RampBase):
             x.append(_x)
             y.append(_y)
         return points, x, y
-
-
-    def render_grid(self):
-        delta_x = 12.0 * self.config.pixels_per_inch
-        delta_y = delta_x
-        fill = "red"
-        print(f"[render_grid] color: {fill}")
-        while delta_x < self.X:
-            print(f"draw grid delta_x {delta_x}")
-            self.draw.line([(delta_x, 0), (delta_x, self.Y)], fill=fill, width=LINE_WIDTH_THIN)
-            delta_x = delta_x + 12.0 * self.config.pixels_per_inch
-
-        while delta_y < self.Y:
-            print(f"draw grid delta_y {delta_y}")
-            self.draw.line([(0, delta_y), (self.X, delta_y)], fill=fill, width=LINE_WIDTH_THIN)
-            delta_y = delta_y + 12.0 * self.config.pixels_per_inch
-
-
-

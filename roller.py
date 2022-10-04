@@ -1,5 +1,5 @@
 import os
-from math import atan, floor, pi, sin, sqrt
+from math import atan, floor, pi, sin
 
 from PIL import Image, ImageDraw
 
@@ -9,9 +9,6 @@ LINE_WIDTH = 100
 LINE_WIDTH_THIN = 20
 TO_DEGREES = 180.0 / pi
 TO_RADIANS = pi / 180.0
-
-def dist(p1, p2):
-    return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
 
 
@@ -111,27 +108,6 @@ class Roller(RampBase):
             x.append(i)
             y.append(_y)
         return points, x, y
-
-
-    # def rung(self, p1, p2):
-    #     self.draw.line([p1, p2], fill=black, width=30)
-
-    def add_rungs(self):
-        p1 = (self.x[0], self.y[0])
-        in_gap = False
-        for i in range(self.X):
-            p2 = (self.x[i], self.y[i])
-            if in_gap:
-                if dist(p1, p2) > self.inches(1.5):
-                    in_gap = False
-                    p1 = p2
-
-            if not in_gap and dist(p1, p2) > self.inches(self.config.rung_width):
-                in_gap = True
-                self.draw.line([p1, p2], fill='red', width=LINE_WIDTH)
-                self.rung_count = self.rung_count + 1
-                p1 = p2
-
 
 
     def get_midpoint(self):
