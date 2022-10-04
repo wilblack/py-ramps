@@ -5,3 +5,5 @@ output/
 __pycache__/
 
 .aws-sam/
+
+DEV_NOTES.md
