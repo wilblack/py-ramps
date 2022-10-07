@@ -6,6 +6,19 @@ stack_name = "MtbRamps"
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-cgwhsw4v9ju6"
 s3_prefix = "MtbRamps"
 region = "us-west-2"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
+
+
+
+[local]
+[local.deploy]
+[local.deploy.parameters]
+stack_name = "MtbRamps"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-cgwhsw4v9ju6"
+s3_prefix = "MtbRamps"
+region = "us-west-2"
 profile = "personal"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
