@@ -56,4 +56,9 @@ Below is the summary of the answers:
 - Ran through `sam pipeline init --bootstrap` again and created a `prod` stage. I created new build resources.
 
 - GitHub secrets
+
   - Create a Repository secret for "AWS_ACCESS_KEY_ID" and "AWS_ACCESS_SECRET_KEY". I used a random UUID for each but I think the --bootstrap script will populate these autmatically. I have to put in the creds from `ws-sam-cli-managed-dev-pipeline-reso-PipelineUser-JBWUOJR6OKF8`
+
+- After it creates the `samconifg.toml` file edit it and make `confirm_changeset` false is in the default environment.
+
+FOO
