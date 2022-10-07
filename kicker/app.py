@@ -51,9 +51,8 @@ def lambda_handler(event, context):
     kicker.draw_image()
     print("Saving to S3")
     url = kicker.save_image_s3()
-
     stats = kicker.stats
-    
+    kicker.save()    
 
     return {
         "statusCode": 200,

@@ -1,6 +1,8 @@
 
+import uuid
 from math import cos, pi, sin, sqrt
 
+import boto3
 from PIL import ImageFont
 
 LINE_WIDTH = 100
@@ -144,3 +146,20 @@ class RampBase():
 
         self.stats.update({"rung_count": rung_count}) 
         return rung_count
+
+    def _create(self, table: str, status) -> str:
+        db = boto3.resource(
+            'dynamodb',
+            region_name="us-west-2"
+        )
+        table = db.Table(table)
+        payload = {**status, "id": str(uuid.uuid4())}
+        response = table.put_item(
+            TableName=table,
+            Item=payload
+        )
+
+        print(response)
+        return payload["id"]
+
+
