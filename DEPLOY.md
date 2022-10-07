@@ -53,5 +53,7 @@ Below is the summary of the answers:
         8 - ECR image repository: [skipped]
 ```
 
-- Now set up CI/CD
-  - [See Step 2 here](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-generating-example-ci-cd-others.html)
+- Ran through `sam pipeline init --bootstrap` again and created a `prod` stage. I created new build resources.
+
+- GitHub secrets
+  - Create a Repository secret for "AWS_ACCESS_KEY_ID" and "AWS_ACCESS_SECRET_KEY". I used a random UUID for each but I think the --bootstrap script will populate these autmatically. I have to put in the creds from `ws-sam-cli-managed-dev-pipeline-reso-PipelineUser-JBWUOJR6OKF8`
