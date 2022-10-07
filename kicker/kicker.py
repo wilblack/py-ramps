@@ -175,6 +175,9 @@ class Kicker(RampBase):
         self.image.save(self.OUT_PATH)
 
 
+    def save(self) -> str:
+        return self._create("Kicker", self.stats)
+
 
     def compute_curve(self):
         points = []

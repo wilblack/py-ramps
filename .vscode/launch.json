@@ -18,7 +18,9 @@
             }
           }
         },
-        "environmentVariables": {}
+        "environmentVariables": {
+          "ENV": "local"
+        }
       }
     }
   ]
