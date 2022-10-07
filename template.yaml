@@ -47,6 +47,11 @@ Resources:
     Properties:
       BucketName: !Sub "${BucketName}"
 
+  KickerTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: Kicker
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
