@@ -61,4 +61,4 @@ Below is the summary of the answers:
 
 - After it creates the `samconifg.toml` file edit it and make `confirm_changeset` false is in the default environment.
 
-FOO
+- Make sure you delete the existing stack if there is one.
