@@ -49,9 +49,14 @@ def lambda_handler(event, context):
     kicker = Kicker(config)
     print("Creating image")
     kicker.draw_image()
-    print("Saving to S3")
-    url = kicker.save_image_s3()
+
+    
+    url = kicker.save_image()
+    print(f"Saved to S3 {url}")
+
     stats = kicker.stats
+    
+    print("Saving to DynamoDB")
     id = kicker.save()
     stats.update({"id": id}) 
 

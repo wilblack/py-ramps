@@ -110,12 +110,7 @@ class Roller(RampBase):
         return points, x, y
 
 
-    def get_midpoint(self):
 
-        index = floor(len(self.x) / 2)
-        print("len(self.x)", len(self.x))
-        print("mid index", index)
-        return (self.x[index], self.y[index])
 
     def render_frame(self):
         mid = self.get_midpoint()

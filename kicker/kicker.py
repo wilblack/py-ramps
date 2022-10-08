@@ -1,16 +1,12 @@
-import io
 import json
 import math
 import os
 from typing import Optional
 
-import boto3
 from PIL import Image, ImageDraw
 
-from ramp_base import BaseConfig, RampBase, format_float
-
-BUCKET_NAME = "mtb-ramps"
-
+from ramp_base import (BaseConfig, RampBase, dist, format_float,
+                       radian_to_degree)
 
 
 class KickerConfig(BaseConfig):
@@ -49,6 +45,8 @@ class Kicker(RampBase):
     def __init__(self, config: KickerConfig, image=None):
         print("in Kicker")
         self.config = config
+        super().__init__(self.config)
+
         if (config.radius_inches):
             [self.height_inches, self.length_inches, self.radius_inches, theta] = self.compute_height(config.angle_radian, config.radius_inches)
         elif (config.height_inches):
@@ -65,9 +63,9 @@ class Kicker(RampBase):
         
         self.X = int(self.length_feet * 12 * config.pixels_per_inch)
         self.Y = int(self.height_feet * 12 * config.pixels_per_inch)
-        self.x = []
-        self.y = []
-        self.OUT_PATH = os.path.join(config.output_dir, config.filename)
+        self.curve_x = []
+        self.curve_y = []
+        self.out_path = os.path.join(config.output_dir, config.filename)
         
         self.size = (self.X, self.Y)
         self.mode = config.mode
@@ -78,6 +76,9 @@ class Kicker(RampBase):
         print("in Kicker 4")
 
         print(f"Height: {self.height_inches:.1f} Length: {self.length_feet:.1f} Radius: {self.radius_feet:.1f} Angle: {config.angle_degree} Theta: {self.theta_degree: .1f}")
+        
+        
+
         self.stats = {
             "height_feet": format_float(self.height_feet),
             "height_inches": format_float(self.height_inches),
@@ -88,9 +89,9 @@ class Kicker(RampBase):
             "takeoff_angle_degrees": format_float(self.config.angle_degree),
             "takeoff_angle_radians": format_float(self.config.angle_radian),
             "arclength_inches": format_float(self.config.angle_radian * self.radius_inches),
-            "arclength_feet": format_float(self.config.angle_radian * self.radius_feet) 
-
+            "arclength_feet": format_float(self.config.angle_radian * self.radius_feet),
         }
+        
         print(json.dumps(self.stats))
         
 
@@ -123,9 +124,9 @@ class Kicker(RampBase):
     def draw_image(self):
         self.draw = ImageDraw.Draw(self.image)
 
-        self.points, self.x, self.y = self.compute_curve()
+        self.curve_points, self.curve_x, self.curve_y = self.compute_curve()
         self.render_grid()
-        self.draw.line(self.points, fill='black', width=self.fill_width)
+        self.draw.line(self.curve_points, fill='black', width=self.fill_width)
         
 
 
@@ -142,37 +143,8 @@ class Kicker(RampBase):
         if self.config.add_text:
             self.add_text(text_rows)
 
-
-        # if self.config.show_frame:
-        #     self.render_frame()
-
-
-
-
-    def save_image_s3(self):
-        s3 = boto3.client('s3')
-        io_stream = io.BytesIO()
-        self.image.save(io_stream, format="PNG")
-        io_stream.seek(0)
-
-        s3.upload_fileobj(
-            io_stream, # This is what i am trying to upload
-            BUCKET_NAME,
-            self.OUT_PATH,
-            ExtraArgs={
-                'ACL': 'public-read'
-            }
-        )
-        url = f"https://{BUCKET_NAME}.s3.us-west-2.amazonaws.com/{self.OUT_PATH}"
-        self.stats.update({"url": url})
-
-        return url
-
-    def save_image_local(self):
-        if not os.path.exists(self.config.output_dir):
-            # Create path
-            os.makedirs(self.config.output_dir)
-        self.image.save(self.OUT_PATH)
+        if self.config.show_frame:
+            self.draw_frame()
 
 
     def save(self) -> str:
@@ -194,3 +166,19 @@ class Kicker(RampBase):
             x.append(_x)
             y.append(_y)
         return points, x, y
+
+
+    def draw_frame(self):
+        mid = self.get_midpoint()
+        
+        lt = (self.curve_x[0],self.curve_y[0])
+        rt = (mid["x"], mid["y"])
+        length = dist(lt, rt)
+        angle_radian = -1 * math.atan( (rt[1] - lt[1]) / (rt[0] - lt[0])  )
+        width = 11 * self.config.pixels_per_inch
+        
+        print(f"frame length {self.pixel_to_inch(length)}, angle: {radian_to_degree(angle_radian)}")
+
+
+        self.render_beam(lt, length, width, angle_radian)
+        # self.render_beam(lt, -length, width, -angle)
