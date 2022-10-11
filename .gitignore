@@ -7,3 +7,6 @@ __pycache__/
 .aws-sam/
 
 DEV_NOTES.md
+
+.~c9_*
+*.png

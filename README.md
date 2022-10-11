@@ -6,6 +6,8 @@ This is a Python 3 project.
 
 2. Create a virtual env and start it
 
+3. Start DynamoDB Docker `docker-compose up`
+
 ```
 python3 -m venv env
 source env/bin/activate
