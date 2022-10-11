@@ -1,5 +1,6 @@
 
 import io
+import json
 import os
 import uuid
 from math import atan, cos, floor, pi, sin, sqrt
@@ -36,7 +37,7 @@ BUCKET_NAME = "mtb-ramps"
 
 
 class BaseConfig():
-    def __init__(self, filename: str, output_dir: str = "output", pixels_per_inch=100, mode='RGB', show_frame=True, add_text=True, rung_width: float = 5.5):
+    def __init__(self, filename: str, output_dir: str = "output", pixels_per_inch=100, mode='RGB', show_frame=True, add_text=True, rung_width: float = 5.5, debug=False):
         self.output_dir = output_dir
         self.filename = filename
 
@@ -45,7 +46,7 @@ class BaseConfig():
         self.mode = mode
         self.show_frame = show_frame
         self.add_text = add_text
-
+        self.debug = debug
 
 class RampBase():
 
@@ -146,9 +147,18 @@ class RampBase():
     def translate(self, point, anchor):
         return (point[0] + anchor[0], point[1] + anchor[1])
 
-    def render_beam(self, anchor: tuple[float, float], length_inches: float, width_inches: float, angle: float):
-        length_pixels = length_inches  # self.inches(length_inches)
-        width_pixels = width_inches  # self.inches(width_inches)
+    def render_beam(self, anchor: tuple[float, float], length_pixels: float, width_pixels: float, angle_radians: float):
+        """_summary_
+        All coordinates are in pixels
+
+        Args:
+            anchor (tuple[float, float]): _description_ Top left corner of the beam
+            length_pixels (float): _description_
+            width_pixels (float): _description_
+            angle_radians (float): _description_
+        """
+        length_pixels = length_pixels  # self.inches(length_pixels)
+        width_pixels = width_pixels  # self.inches(width_pixels)
 
         points = [
             (0, 0),
@@ -159,7 +169,7 @@ class RampBase():
 
         print(f"X: {self.X}, Y: {self.Y}")
         # rotate
-        points = [self.rotate(p, angle) for p in points]
+        points = [self.rotate(p, angle_radians) for p in points]
 
         # translate
         points = [self.translate(p, anchor) for p in points]
@@ -196,8 +206,6 @@ class RampBase():
                 in_gap = True
                 self.draw.line([p1, p2], fill='red', width=50)
                 rung_count = rung_count + 1
-                print(
-                    f"i = {i}, x = {self.curve_x[i] / self.config.pixels_per_inch}")
                 p1 = p2
 
         self.stats.update({"rung_count": rung_count})
@@ -265,10 +273,16 @@ class RampBase():
         slope = rise / run
         angle_radian = atan(slope)
         angle_degree = radian_to_degree(angle_radian)
-        return {
+        
+        out = {
             "x": self.curve_x[index],
             "y": self.curve_y[index],
             "slope": slope,
             "radians": angle_radian,
             "angle_degree": angle_degree
         }
+        if self.config.debug:
+            print(f"[get_midpoint] {json.dumps(out, indent=2)}")
+
+
+        return out

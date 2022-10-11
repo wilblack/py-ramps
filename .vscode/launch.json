@@ -14,7 +14,8 @@
           "json": {
             "queryStringParameters": {
               "angle": 50,
-              "height": 7
+              "height": 7,
+              "debug": "true"
             }
           }
         },

@@ -37,7 +37,7 @@ class KickerConfig(BaseConfig):
         output_dir = output_dir if output_dir else "output"
 
         super().__init__(filename, output_dir, pixels_per_inch,
-                         mode=mode, show_frame=show_frame, add_text=add_text)
+                         mode=mode, show_frame=show_frame, add_text=add_text, debug=debug)
 
 
 class Kicker(RampBase):
@@ -162,16 +162,22 @@ class Kicker(RampBase):
         return points, x, y
 
     def draw_frame(self):
+        width = 11 * self.config.pixels_per_inch
         mid = self.get_midpoint()
-
+        
+        # Bottom left beam
         lt = (self.curve_x[0], self.curve_y[0])
         rt = (mid["x"], mid["y"])
         length = dist(lt, rt)
-        angle_radian = -1 * math.atan((rt[1] - lt[1]) / (rt[0] - lt[0]))
-        width = 11 * self.config.pixels_per_inch
-
-        print(
-            f"frame length {self.pixel_to_inch(length)}, angle: {radian_to_degree(angle_radian)}")
-
+        angle_radian = math.atan((rt[1] - lt[1]) / (rt[0] - lt[0]))
+        if self.config.debug:
+            print(
+            f"[draw_frame] length {length}, angle: {radian_to_degree(angle_radian)}, lt: {lt}, width: {width}")
         self.render_beam(lt, length, width, angle_radian)
-        # self.render_beam(lt, -length, width, -angle)
+
+        # Top right beam
+        lt = (mid["x"], mid["y"])
+        rt = (self.curve_x[-1], self.curve_y[-1])
+        length = dist(lt, rt)
+        angle_radian = math.atan((rt[1] - lt[1]) / (rt[0] - lt[0]))
+        self.render_beam(lt, length, width, angle_radian)
