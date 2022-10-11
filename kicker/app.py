@@ -7,16 +7,20 @@ from kicker import Kicker, KickerConfig
 
 def clean_params(params):
     if params.get("angle"):
-        angle = float(params["angle"])
+        angle_degree = float(params["angle"])
     else:
         raise Exception("angle not provided")
+   
     if params.get("height"):
-        height = float(params["height"])
+        height_inches = float(params["height"]) * 12.0
     else:
         raise Exception("height not provided")
+    
+    
     return {
-        "angle": angle,
-        "height": height
+        "angle_degree": angle_degree,
+        "height_inches": height_inches,
+        "debug": True if params.get("debug") == "true" else False
     }
 
 
@@ -45,7 +49,7 @@ def lambda_handler(event, context):
     print(f"event {event['queryStringParameters'].keys()}")
     params = clean_params(event["queryStringParameters"])
 
-    config = KickerConfig(params["angle"], height_inches=params["height"] * 12.0)
+    config = KickerConfig(**params)
     kicker = Kicker(config)
     print("Creating image")
     kicker.draw_image()

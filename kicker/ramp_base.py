@@ -12,11 +12,13 @@ LINE_WIDTH_THIN = 5
 TO_DEGREES = 180.0 / pi
 TO_RADIANS = pi / 180.0
 
+
 def format_float(f: float):
     if isinstance(f, float):
         return float(f"{f:.2}")
     else:
         return f
+
 
 def dist(p1: tuple[float, float], p2: tuple[float, float]) -> float:
     return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
@@ -25,14 +27,16 @@ def dist(p1: tuple[float, float], p2: tuple[float, float]) -> float:
 def radian_to_degree(rads: float) -> float:
     return rads * TO_DEGREES
 
+
 def degree_to_radia(degrees: float) -> float:
     return degrees * TO_RADIANS
 
 
 BUCKET_NAME = "mtb-ramps"
 
+
 class BaseConfig():
-    def __init__(self, filename:str, output_dir: str = "output", pixels_per_inch=100, mode='RGB', show_frame=True, add_text=True, rung_width: float = 5.5):
+    def __init__(self, filename: str, output_dir: str = "output", pixels_per_inch=100, mode='RGB', show_frame=True, add_text=True, rung_width: float = 5.5):
         self.output_dir = output_dir
         self.filename = filename
 
@@ -50,79 +54,84 @@ class RampBase():
         self.config = config
         self.stats = {}
         self.out_path = "output"
-        
+
         # Absolute size of canvas in pixels
         self.X = 0
         self.Y = 0
 
         # The pixels of the curve
-        self.curve_x = [0] 
+        self.curve_x = [0]
         self.curve_y = [0]
         self.curve_points = []
 
         # The image object, will be instantiated by the subclass
-        self.image = Image.new(mode="RGB", size=(1,1))
+        self.image = Image.new(mode="RGB", size=(1, 1))
         self.draw = ImageDraw.Draw(self.image)
 
     def draw_image(self):
-        raise NotImplemented("Must be implemented by subclass.") 
+        raise NotImplemented("Must be implemented by subclass.")
 
-    def draw_frame(self, width_inches: float=11.0):
+    def draw_frame(self, width_inches: float = 11.0):
         """
         Draws a 2x frame based on the midpoint of the curve
 
         """
         raise NotImplemented()
 
-
-
-
     def compute_curve(self) -> tuple[list[tuple[float, float]], list[float], list[float]]:
-        raise NotImplemented("Must be implemented by subclass.") 
+        raise NotImplemented("Must be implemented by subclass.")
 
-    def add_text(self, rows: list[str], position: str="top"):
+    def add_text(self, rows: list[str], position: str = "top"):
         if not self.draw:
-            raise Exception("You must instantiate self.draw as an instance of Image.draw()")
+            raise Exception(
+                "You must instantiate self.draw as an instance of Image.draw()")
         font_size = self.config.pixels_per_inch * 2
         row_height = self.inches(2)
         padding_vert = self.inches(2.5)
         font = ImageFont.truetype("Yagora.ttf", font_size)
-                
+
         for i, row in enumerate(rows):
             x = self.X * .1
             if position == "top":
                 y = padding_vert + i * row_height
             else:
-                y = self.Y - len(rows) * row_height - padding_vert + i * row_height
+                y = self.Y - len(rows) * row_height - \
+                    padding_vert + i * row_height
             print("Adding text {0}".format(row))
-            self.draw.text((x, y),row,(0,0,0),font=font)
-
+            self.draw.text((x, y), row, (0, 0, 0), font=font)
 
     def inches(self, inches: float):
         """
         Converts value in inches to pixels
         """
         return inches * self.config.pixels_per_inch
-    
+
     def pixel_to_inch(self, pixels: float) -> float:
         return pixels / self.config.pixels_per_inch / 12.0
 
     def render_grid(self):
         if not self.draw:
-            raise Exception("You must instantiate self.draw as an instance of Image.draw()")
+            raise Exception(
+                "You must instantiate self.draw as an instance of Image.draw()")
         delta_x = 12.0 * self.config.pixels_per_inch
         delta_y = delta_x
-        font = ImageFont.truetype("Yagora.ttf", int(self.config.pixels_per_inch * 1.5))
+        font = ImageFont.truetype("Yagora.ttf", int(
+            self.config.pixels_per_inch * 1.5))
         while delta_x < self.X:
-            label = delta_x / 12.0 / self.config.pixels_per_inch
-            self.draw.line([(delta_x, 0), (delta_x, self.Y)], fill='grey', width=LINE_WIDTH_THIN)
-            self.draw.text((delta_x + 20, delta_y * 0.05), f"{label:.0f} (ft)", (0,0,0), font=font)
+            label_ft = delta_x / 12.0 / self.config.pixels_per_inch
+            label = f"{label_ft:.0f} (ft) [{delta_x}]"
+            self.draw.line([(delta_x, 0), (delta_x, self.Y)],
+                           fill='grey', width=LINE_WIDTH_THIN)
+            self.draw.text((delta_x + 20, delta_y * 0.05),
+                           label, (0, 0, 0), font=font)
             delta_x = delta_x + 12.0 * self.config.pixels_per_inch
 
         while delta_y < self.Y:
-            label = (self.Y - delta_y) / 12.0 / self.config.pixels_per_inch
-            self.draw.line([(0, delta_y), (self.X, delta_y)], fill='grey', width=LINE_WIDTH_THIN)
-            self.draw.text((20, delta_y), f"{label:.0f} (ft)", (0,0,0), font=font)
+            label_ft = (self.Y - delta_y) / 12.0 / self.config.pixels_per_inch
+            label = f"{label_ft:.0f} (ft) [{delta_y}]"
+            self.draw.line([(0, delta_y), (self.X, delta_y)],
+                           fill='grey', width=LINE_WIDTH_THIN)
+            self.draw.text((20, delta_y), label, (0, 0, 0), font=font)
             delta_y = delta_y + 12.0 * self.config.pixels_per_inch
 
     def rotate(self, point, angle):
@@ -138,8 +147,8 @@ class RampBase():
         return (point[0] + anchor[0], point[1] + anchor[1])
 
     def render_beam(self, anchor: tuple[float, float], length_inches: float, width_inches: float, angle: float):
-        length_pixels = length_inches # self.inches(length_inches)
-        width_pixels = width_inches # self.inches(width_inches)
+        length_pixels = length_inches  # self.inches(length_inches)
+        width_pixels = width_inches  # self.inches(width_inches)
 
         points = [
             (0, 0),
@@ -155,11 +164,14 @@ class RampBase():
         # translate
         points = [self.translate(p, anchor) for p in points]
 
-        self.draw.line([points[0], points[1]], fill='red', width=LINE_WIDTH_THIN)
-        self.draw.line([points[1], points[2]], fill='red', width=LINE_WIDTH_THIN)
-        self.draw.line([points[2], points[3]], fill='red', width=LINE_WIDTH_THIN)
-        self.draw.line([points[3], points[0]], fill='red', width=LINE_WIDTH_THIN)
-
+        self.draw.line([points[0], points[1]],
+                       fill='red', width=LINE_WIDTH_THIN)
+        self.draw.line([points[1], points[2]],
+                       fill='red', width=LINE_WIDTH_THIN)
+        self.draw.line([points[2], points[3]],
+                       fill='red', width=LINE_WIDTH_THIN)
+        self.draw.line([points[3], points[0]],
+                       fill='red', width=LINE_WIDTH_THIN)
 
     def add_rungs(self) -> int:
         """
@@ -178,23 +190,24 @@ class RampBase():
                 if dist(p1, p2) > self.inches(1.5):
                     in_gap = False
                     p1 = p2
-            
-            # Not in the gap, check if I am the end of a rung. 
+
+            # Not in the gap, check if I am the end of a rung.
             elif dist(p1, p2) > self.inches(self.config.rung_width):
                 in_gap = True
                 self.draw.line([p1, p2], fill='red', width=50)
                 rung_count = rung_count + 1
-                print(f"i = {i}, x = {self.curve_x[i] / self.config.pixels_per_inch}")
+                print(
+                    f"i = {i}, x = {self.curve_x[i] / self.config.pixels_per_inch}")
                 p1 = p2
 
-        self.stats.update({"rung_count": rung_count}) 
+        self.stats.update({"rung_count": rung_count})
         return rung_count
 
     def _create(self, table: str, status) -> str:
         if self.env == "local":
             print("Env is local so doing nothing.")
             return ""
-        
+
         db = boto3.resource(
             'dynamodb',
             region_name="us-west-2"
@@ -209,14 +222,12 @@ class RampBase():
         print(response)
         return payload["id"]
 
-
     def save_image(self):
-        return self._save_image_s3()      
+        return self._save_image_s3()
         # if self.env == "local":
         #     return self._save_image_local()
         # else:
         #     return self._save_image_s3
-
 
     def _save_image_s3(self):
         s3 = boto3.client('s3')
@@ -225,7 +236,7 @@ class RampBase():
         io_stream.seek(0)
 
         s3.upload_fileobj(
-            io_stream, # This is what i am trying to upload
+            io_stream,  # This is what i am trying to upload
             BUCKET_NAME,
             self.out_path,
             ExtraArgs={
@@ -246,17 +257,18 @@ class RampBase():
 
     def get_midpoint(self):
         if len(self.curve_x) < 3 or len(self.curve_y) < 3:
-            raise Exception("curve_x or curve_y is not long enough to compute midpoint.")
+            raise Exception(
+                "curve_x or curve_y is not long enough to compute midpoint.")
         index = floor(len(self.curve_x) / 2)
         rise = self.curve_y[index + 1] - self.curve_y[index - 1]
-        run = self.curve_x[index + 1] - self.curve_x[index - 1] 
+        run = self.curve_x[index + 1] - self.curve_x[index - 1]
         slope = rise / run
         angle_radian = atan(slope)
         angle_degree = radian_to_degree(angle_radian)
         return {
-            "x": self.curve_x[index], 
-            "y": self.curve_y[index], 
-            "slope": slope, 
-            "radians": angle_radian, 
+            "x": self.curve_x[index],
+            "y": self.curve_y[index],
+            "slope": slope,
+            "radians": angle_radian,
             "angle_degree": angle_degree
         }

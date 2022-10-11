@@ -11,9 +11,10 @@ from ramp_base import (BaseConfig, RampBase, dist, format_float,
 
 class KickerConfig(BaseConfig):
     def __init__(self, angle_degree: float, radius_inches: Optional[float] = None, height_inches: Optional[float] = None, output_dir=None, filename=None,
-        pixels_per_inch=20, mode='RGB', show_rungs=True, show_frame=True, add_text=True, rung_width=5.5):
-        
+                 pixels_per_inch=20, mode='RGB', show_rungs=True, show_frame=True, add_text=True, rung_width=5.5, debug=False):
 
+        self.debug = debug
+        print(f"debug = {self.debug}")
         self.radius_inches = radius_inches
         self.height_inches = height_inches
         self.angle_degree = angle_degree
@@ -26,7 +27,6 @@ class KickerConfig(BaseConfig):
         else:
             raise Exception("You must provide a radius or a height in inches")
 
-        
         self.pixels_per_inch = pixels_per_inch
         self.mode = mode
         self.show_rungs = show_rungs
@@ -35,23 +35,25 @@ class KickerConfig(BaseConfig):
         self.add_text = add_text
 
         output_dir = output_dir if output_dir else "output"
-        
-        super().__init__(filename, output_dir, pixels_per_inch, mode=mode, show_frame=show_frame, add_text=add_text)
 
+        super().__init__(filename, output_dir, pixels_per_inch,
+                         mode=mode, show_frame=show_frame, add_text=add_text)
 
 
 class Kicker(RampBase):
-    
+
     def __init__(self, config: KickerConfig, image=None):
         print("in Kicker")
         self.config = config
         super().__init__(self.config)
 
         if (config.radius_inches):
-            [self.height_inches, self.length_inches, self.radius_inches, theta] = self.compute_height(config.angle_radian, config.radius_inches)
+            [self.height_inches, self.length_inches, self.radius_inches,
+                theta] = self.compute_height(config.angle_radian, config.radius_inches)
         elif (config.height_inches):
             print(f"config.height_inches {config.height_inches}")
-            [self.height_inches, self.length_inches, self.radius_inches, theta] = self.compute_radius(config.angle_radian, config.height_inches)
+            [self.height_inches, self.length_inches, self.radius_inches,
+                theta] = self.compute_radius(config.angle_radian, config.height_inches)
         else:
             raise Exception("You must provide a radius or a height in inches")
 
@@ -60,24 +62,23 @@ class Kicker(RampBase):
         self.radius_feet = self.radius_inches / 12.0
         self.theta_radian = theta
         self.theta_degree = self.theta_radian * 180.0 / math.pi
-        
+
         self.X = int(self.length_feet * 12 * config.pixels_per_inch)
         self.Y = int(self.height_feet * 12 * config.pixels_per_inch)
         self.curve_x = []
         self.curve_y = []
         self.out_path = os.path.join(config.output_dir, config.filename)
-        
+
         self.size = (self.X, self.Y)
         self.mode = config.mode
         self.color = 'white'
         self.fill_width = 10
         print("in Kicker 3")
-        self.image = image if image else Image.new(self.mode, self.size, self.color)
+        self.image = image if image else Image.new(
+            self.mode, self.size, self.color)
         print("in Kicker 4")
 
         print(f"Height: {self.height_inches:.1f} Length: {self.length_feet:.1f} Radius: {self.radius_feet:.1f} Angle: {config.angle_degree} Theta: {self.theta_degree: .1f}")
-        
-        
 
         self.stats = {
             "height_feet": format_float(self.height_feet),
@@ -91,35 +92,31 @@ class Kicker(RampBase):
             "arclength_inches": format_float(self.config.angle_radian * self.radius_inches),
             "arclength_feet": format_float(self.config.angle_radian * self.radius_feet),
         }
-        
+
         print(json.dumps(self.stats))
-        
 
     def compute_radius(self, angle_radian: float, height_inches: float):
         print(f"in compute_radius height: {height_inches}")
         if (angle_radian < 0 or angle_radian > math.pi / 2.0):
-            raise Exception(f"Angle must be between 0 and pi / 4 radians. You gave ${angle_radian}")
+            raise Exception(
+                f"Angle must be between 0 and pi / 4 radians. You gave ${angle_radian}")
         theta = math.pi / 2.0 - angle_radian
         r = height_inches / (1 - math.sin(theta))
         l = r * math.cos(theta)
         print("done compute_radius")
         return [height_inches, l, r, theta]
-    
-
 
     def compute_height(self, angle_radian: float, radius_inches: float):
         print("in compute_height")
         if (angle_radian < 0 or angle_radian > math.pi / 2.0):
-            raise Exception(f"Angle must be between 0 and pi / 4 radians. You gave ${angle_radian}")
+            raise Exception(
+                f"Angle must be between 0 and pi / 4 radians. You gave ${angle_radian}")
 
         theta = math.pi / 2.0 - angle_radian
-        h = radius_inches - radius_inches * math.sin(theta) 
-        l = radius_inches * math.cos(theta) 
+        h = radius_inches - radius_inches * math.sin(theta)
+        l = radius_inches * math.cos(theta)
         print(f"Done computing height")
         return [h, l, radius_inches, theta]
-
-
-
 
     def draw_image(self):
         self.draw = ImageDraw.Draw(self.image)
@@ -127,8 +124,6 @@ class Kicker(RampBase):
         self.curve_points, self.curve_x, self.curve_y = self.compute_curve()
         self.render_grid()
         self.draw.line(self.curve_points, fill='black', width=self.fill_width)
-        
-
 
         text_rows = [
             f"Height (ft): {self.stats['height_feet']}",
@@ -139,17 +134,15 @@ class Kicker(RampBase):
         if self.config.show_rungs:
             rung_count = self.add_rungs()
             text_rows.append(f"Rungs: {rung_count}")
-            
+
         if self.config.add_text:
             self.add_text(text_rows)
 
         if self.config.show_frame:
             self.draw_frame()
 
-
     def save(self) -> str:
         return self._create("Kicker", self.stats)
-
 
     def compute_curve(self):
         points = []
@@ -157,28 +150,28 @@ class Kicker(RampBase):
         y = []
         # import pdb; pdb.set_trace()
 
-        dt = (math.pi / 2  - self.theta_radian) / float(self.X)
+        dt = (math.pi / 2 - self.theta_radian) / float(self.X)
         for i in range(self.X):
-            theta = math.pi / 2  - dt * i
+            theta = math.pi / 2 - dt * i
             _x = self.inches(self.radius_inches * math.cos(theta))
-            _y = self.inches(self.height_inches) - self.inches(self.radius_inches) + self.inches(self.radius_inches * math.sin(theta)) 
-            points.append((_x ,_y))
+            _y = self.inches(self.height_inches) - self.inches(self.radius_inches) + \
+                self.inches(self.radius_inches * math.sin(theta))
+            points.append((_x, _y))
             x.append(_x)
             y.append(_y)
         return points, x, y
 
-
     def draw_frame(self):
         mid = self.get_midpoint()
-        
-        lt = (self.curve_x[0],self.curve_y[0])
+
+        lt = (self.curve_x[0], self.curve_y[0])
         rt = (mid["x"], mid["y"])
         length = dist(lt, rt)
-        angle_radian = -1 * math.atan( (rt[1] - lt[1]) / (rt[0] - lt[0])  )
+        angle_radian = -1 * math.atan((rt[1] - lt[1]) / (rt[0] - lt[0]))
         width = 11 * self.config.pixels_per_inch
-        
-        print(f"frame length {self.pixel_to_inch(length)}, angle: {radian_to_degree(angle_radian)}")
 
+        print(
+            f"frame length {self.pixel_to_inch(length)}, angle: {radian_to_degree(angle_radian)}")
 
         self.render_beam(lt, length, width, angle_radian)
         # self.render_beam(lt, -length, width, -angle)
