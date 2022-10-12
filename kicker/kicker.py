@@ -63,13 +63,16 @@ class Kicker(RampBase):
         self.theta_radian = theta
         self.theta_degree = self.theta_radian * 180.0 / math.pi
 
+
+
+    
         self.X = int(self.length_feet * 12 * config.pixels_per_inch)
         self.Y = int(self.height_feet * 12 * config.pixels_per_inch)
         self.curve_x = []
         self.curve_y = []
         self.out_path = os.path.join(config.output_dir, config.filename)
 
-        self.size = (self.X, self.Y)
+        self.size = (self.padding["left"] + self.X + self.padding["right"], self.padding["bottom"] + self.Y + self.padding["top"])
         self.mode = config.mode
         self.color = 'white'
         self.fill_width = 10
@@ -144,7 +147,7 @@ class Kicker(RampBase):
     def save(self) -> str:
         return self._create("Kicker", self.stats)
 
-    def compute_curve(self):
+    def compute_curve(self) -> tuple[tuple[float, float], list[float], list[float]]:
         points = []
         x = []
         y = []
@@ -153,13 +156,13 @@ class Kicker(RampBase):
         dt = (math.pi / 2 - self.theta_radian) / float(self.X)
         for i in range(self.X):
             theta = math.pi / 2 - dt * i
-            _x = self.inches(self.radius_inches * math.cos(theta))
-            _y = self.inches(self.height_inches) - self.inches(self.radius_inches) + \
+            _x = self.inches(self.radius_inches * math.cos(theta)) + self.padding["left"]
+            _y = self.padding["top"] + self.inches(self.height_inches) - self.inches(self.radius_inches) + \
                 self.inches(self.radius_inches * math.sin(theta))
             points.append((_x, _y))
             x.append(_x)
             y.append(_y)
-        return points, x, y
+        return tuple(points), x, y
 
     def draw_frame(self):
         width = 11 * self.config.pixels_per_inch
