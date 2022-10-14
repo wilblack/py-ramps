@@ -47,11 +47,11 @@ Resources:
                   Required: true
               - method.request.querystring.height:
                   Required: true
-  MtbRampsBucket:
-    Type: "AWS::S3::Bucket"
-    DeletionPolicy: "Retain"
-    Properties:
-      BucketName: !Sub "${BucketName}"
+  # MtbRampsBucket:
+  #   Type: "AWS::S3::Bucket"
+  #   DeletionPolicy: "Retain"
+  #   Properties:
+  #     BucketName: !Sub "${BucketName}"
 
   KickerTable:
     Type: AWS::Serverless::SimpleTable

@@ -24,6 +24,26 @@ See https://docs.aws.amazon.com/serverless-application-model/latest/developergui
 
 - When all is good deploy `sam deploy --profile personal`
 
+If the stack fails to deploy you can delete it with
+
+```sh
+# Delete the stack
+aws cloudformation delete-stack --stack-name MtbRamps --profile personal
+
+# Delete the bucket
+aws s3 rb s3://mtb-ramps --force --profile personal
+
+```
+
+## Check the deploy
+
+```sh
+# list buckets
+aws s3 ls --profile personal
+
+# List lambda functions
+```
+
 # CI/CD SEtup
 
 - `sam pipeline init --bootstrap`
