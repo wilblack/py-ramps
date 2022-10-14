@@ -2,6 +2,7 @@
 import io
 import json
 import os
+import traceback
 import uuid
 from math import atan, cos, floor, pi, sin, sqrt
 
@@ -231,10 +232,13 @@ class RampBase():
         )
         table = db.Table(table)  # type: ignore
         payload = {**status, "id": str(uuid.uuid4())}
-        response = table.put_item(  # type: ignore
-            TableName=table,
-            Item=payload
-        )
+        try:
+            response = table.put_item(  # type: ignore
+                TableName=table,
+                Item=payload
+            )
+        except:
+            traceback.print_exc()
 
         print(response)
         return payload["id"]
