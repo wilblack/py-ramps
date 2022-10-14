@@ -1,10 +1,8 @@
 
-import io
-import json
 import os
 import traceback
 import uuid
-from math import atan, cos, floor, pi, sin, sqrt
+from math import cos, floor, pi, sin, sqrt
 
 import boto3
 from PIL import Image, ImageDraw, ImageFont
@@ -237,10 +235,11 @@ class RampBase():
                 TableName=table,
                 Item=payload
             )
+            print(response)
         except:
-            traceback.print_exc()
+            print(f"Failed to save to DynamoDB. Error: {traceback.print_exc()}")
 
-        print(response)
+        
         return payload["id"]
 
     def save_image(self):

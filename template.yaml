@@ -64,7 +64,7 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   KickerApi:
     Description: "API Gateway endpoint URL"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/kicker/"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/kicker/?angle=60&height=7"
   KickerApiFunction:
     Description: "Kicker Lambda Function ARN"
     Value: !GetAtt KickerFunction.Arn
