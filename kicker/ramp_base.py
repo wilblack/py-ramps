@@ -29,7 +29,7 @@ def radian_to_degree(rads: float) -> float:
     return rads * TO_DEGREES
 
 
-def degree_to_radia(degrees: float) -> float:
+def degree_to_radian(degrees: float) -> float:
     return degrees * TO_RADIANS
 
 
