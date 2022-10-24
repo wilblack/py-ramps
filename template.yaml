@@ -56,8 +56,7 @@ Resources:
           Properties:
             Path: /kicker
             Method: get
-            RestApiId:
-              Ref: ApiGatewayApi
+            RestApiId: !Ref ApiGatewayApi
             RequestParameters:
               - method.request.querystring.angle:
                   Required: true
@@ -80,7 +79,7 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   KickerApi:
     Description: "API Gateway endpoint URL"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/kicker/"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/kicker/"
   KickerApiFunction:
     Description: "Kicker Lambda Function ARN"
     Value: !GetAtt KickerFunction.Arn
