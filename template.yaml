@@ -20,18 +20,26 @@ Parameters:
   Stage:
     Type: String
     Default: dev
+  Domain:
+    Type: String
+    Default: blackwoodmtb.com
 
 Resources:
-  # ApiCertificate:
-  #   Type: AWS::CertificateManager::Certificate
-  #   Properties:
-  #     DomainName: !Sub sam-api-${Stage}.YOUR_DOMAIN.com
-  #     ValidationMethod: DNS
+  ApiCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub sam-api-${Stage}.${Domain}
+      ValidationMethod: DNS
 
   ApiGatewayApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: !Ref Stage
+      Domain:
+        DomainName: !Sub sam-api-${Stage}.${Domain}
+        CertificateArn: !Ref ApiCertificate
+        Route53:
+          HostedZoneName: !Sub ${Domain} # NOTE: The period at the end is required
 
   KickerFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
