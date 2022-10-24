@@ -10,3 +10,7 @@ DEV_NOTES.md
 
 .~c9_*
 *.png
+
+.idea/
+ramps.iml
+*.pyc

@@ -1,16 +1,25 @@
 
+import io
+import json
 import os
 import traceback
 import uuid
-from math import cos, floor, pi, sin, sqrt
+from math import atan, cos, floor, pi, sin, sqrt
+from typing import List, Tuple
 
 import boto3
+from boto3.dynamodb.types import TypeSerializer
+
+serializer = TypeSerializer()
+
 from PIL import Image, ImageDraw, ImageFont
 
 LINE_WIDTH = 100
 LINE_WIDTH_THIN = 5
 TO_DEGREES = 180.0 / pi
 TO_RADIANS = pi / 180.0
+
+
 
 
 def format_float(f: float):
@@ -20,7 +29,7 @@ def format_float(f: float):
         return f
 
 
-def dist(p1: tuple[float, float], p2: tuple[float, float]) -> float:
+def dist(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
     return sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
 
@@ -28,7 +37,7 @@ def radian_to_degree(rads: float) -> float:
     return rads * TO_DEGREES
 
 
-def degree_to_radia(degrees: float) -> float:
+def degree_to_radian(degrees: float) -> float:
     return degrees * TO_RADIANS
 
 
@@ -85,10 +94,10 @@ class RampBase():
         """
         raise NotImplemented()
 
-    def compute_curve(self) -> tuple[list[tuple[float, float]], list[float], list[float]]:
+    def compute_curve(self) -> Tuple[List[Tuple[float, float]], List[float], List[float]]:
         raise NotImplemented("Must be implemented by subclass.")
 
-    def add_text(self, rows: list[str], position: str = "top"):
+    def add_text(self, rows: List[str], position: str = "top"):
         if not self.draw:
             raise Exception(
                 "You must instantiate self.draw as an instance of Image.draw()")
@@ -155,12 +164,12 @@ class RampBase():
     def translate(self, point, anchor):
         return (point[0] + anchor[0], point[1] + anchor[1])
 
-    def render_beam(self, anchor: tuple[float, float], length_pixels: float, width_pixels: float, angle_radians: float):
+    def render_beam(self, anchor: Tuple[float, float], length_pixels: float, width_pixels: float, angle_radians: float):
         """_summary_
         All coordinates are in pixels
 
         Args:
-            anchor (tuple[float, float]): _description_ Top left corner of the beam
+            anchor (Tuple[float, float]): _description_ Top left corner of the beam
             length_pixels (float): _description_
             width_pixels (float): _description_
             angle_radians (float): _description_
@@ -219,17 +228,17 @@ class RampBase():
         self.stats.update({"rung_count": rung_count})
         return rung_count
 
-    def _create(self, table: str, status) -> str:
-        if self.env == "local":
-            print("Env is local so doing nothing.")
-            return ""
+    def _create(self, table: str, stats) -> str:
+        # if self.env == "local":
+        #     print("Env is local so doing nothing.")
+        #     return ""
 
         db = boto3.resource(
             'dynamodb',
             region_name="us-west-2"
         )
         table = db.Table(table)  # type: ignore
-        payload = {**status, "id": str(uuid.uuid4())}
+        payload = {**stats, "id": str(uuid.uuid4())}
         try:
             response = table.put_item(  # type: ignore
                 TableName=table,
