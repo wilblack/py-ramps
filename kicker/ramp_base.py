@@ -2,9 +2,9 @@
 import io
 import json
 import os
-from typing import List, Tuple
 import uuid
 from math import atan, cos, floor, pi, sin, sqrt
+from typing import List, Tuple
 
 import boto3
 from boto3.dynamodb.types import TypeSerializer
@@ -219,9 +219,9 @@ class RampBase():
         return rung_count
 
     def _create(self, table: str, stats) -> str:
-        # if self.env == "local":
-        #     print("Env is local so doing nothing.")
-        #     return ""
+        if self.env == "local":
+            print("Env is local so doing nothing.")
+            return ""
 
         db = boto3.resource(
             'dynamodb',

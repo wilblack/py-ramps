@@ -1,8 +1,8 @@
 
-from math import pi, sin, cos, tan, atan
-from typing import Optional
 import json
-from .utils import dist, format_float, degree_to_radian, radian_to_degree
+from math import atan, cos, pi, sin
+
+from utils import degree_to_radian, dist, format_float, radian_to_degree
 
 
 def kicker_from_angle_and_height(angle: float, height: float):
