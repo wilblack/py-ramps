@@ -3,6 +3,7 @@ import io
 import json
 import os
 import uuid
+from decimal import Decimal
 from math import atan, cos, floor, pi, sin, sqrt
 from typing import List, Tuple
 
@@ -218,20 +219,20 @@ class RampBase():
         self.stats.update({"rung_count": rung_count})
         return rung_count
 
-    def _create(self, table: str, stats) -> str:
-        if self.env == "local":
-            print("Env is local so doing nothing.")
-            return ""
+    def _create(self, table_name: str, stats) -> str:
+        # if self.env == "local":
+        #     print("Env is local so doing nothing.")
+        #     return ""
 
         db = boto3.resource(
             'dynamodb',
             region_name="us-west-2"
         )
-        table = db.Table(table)  # type: ignore
+        table = db.Table(table_name)  # type: ignore
         payload = {**stats, "id": str(uuid.uuid4())}
+        item = json.loads(json.dumps(payload), parse_float=Decimal)
         response = table.put_item(  # type: ignore
-            TableName=table,
-            Item=payload
+            Item=item
         )
 
         print(response)
