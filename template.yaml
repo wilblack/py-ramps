@@ -17,6 +17,9 @@ Parameters:
   BucketName:
     Type: String
     Default: mtb-ramps
+  Stage:
+    Type: String
+    Default: dev
 
 Resources:
   # ApiCertificate:
