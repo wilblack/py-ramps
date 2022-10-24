@@ -6,12 +6,18 @@ import uuid
 from math import atan, cos, floor, pi, sin, sqrt
 
 import boto3
+from boto3.dynamodb.types import TypeSerializer
+
+serializer = TypeSerializer()
+
 from PIL import Image, ImageDraw, ImageFont
 
 LINE_WIDTH = 100
 LINE_WIDTH_THIN = 5
 TO_DEGREES = 180.0 / pi
 TO_RADIANS = pi / 180.0
+
+
 
 
 def format_float(f: float):
@@ -211,17 +217,17 @@ class RampBase():
         self.stats.update({"rung_count": rung_count})
         return rung_count
 
-    def _create(self, table: str, status) -> str:
-        if self.env == "local":
-            print("Env is local so doing nothing.")
-            return ""
+    def _create(self, table: str, stats) -> str:
+        # if self.env == "local":
+        #     print("Env is local so doing nothing.")
+        #     return ""
 
         db = boto3.resource(
             'dynamodb',
             region_name="us-west-2"
         )
         table = db.Table(table)  # type: ignore
-        payload = {**status, "id": str(uuid.uuid4())}
+        payload = {**stats, "id": str(uuid.uuid4())}
         response = table.put_item(  # type: ignore
             TableName=table,
             Item=payload
