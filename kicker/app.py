@@ -63,6 +63,7 @@ def lambda_handler(event, context):
     print("Saving to DynamoDB")
     id = kicker.save()
     stats.update({"id": id}) 
+    print(json.dumps(stats, indent=2))
 
     return {
         "statusCode": 200,
