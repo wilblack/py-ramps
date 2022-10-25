@@ -26,6 +26,7 @@ See https://docs.aws.amazon.com/serverless-application-model/latest/developergui
 
 - When all is good deploy `sam deploy --profile personal`
 
+<<<<<<< Updated upstream
 If the stack fails to deploy you can delete it with
 
 ```sh
@@ -45,6 +46,15 @@ aws s3 ls --profile personal
 
 # List lambda functions
 ```
+=======
+## Checking Deployment
+
+**List Functions**
+`aws lambda list-functions --profile personal`
+
+**Invoke Function**
+`aws lambda invoke --function-name padding-KickerFunction-iEjL2UkRuFKS --cli-binary-format raw-in-base64-out --payload '{"queryStringParameters": {"angle": "55","height": "6"}}'
+>>>>>>> Stashed changes
 
 # CI/CD SEtup
 
