@@ -1,5 +1,4 @@
 
-import json
 import math
 import os
 from typing import Optional
@@ -176,9 +175,9 @@ if __name__ == "__main__":
     # ramp = Ramp(config)
     # config = RampConfig(89, height_inches=6*12.0)
     # ramp = Ramp(config)
-    config = RampConfig(50, height_inches=7.0 * 12.0)
-    ramp = Ramp(config)
-    print(json.dumps(ramp.stats, indent=2))
+    # config = RampConfig(50, height_inches=7.0 * 12.0)
+    # ramp = Ramp(config)
+    # print(json.dumps(ramp.stats, indent=2))
     
 
 

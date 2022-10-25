@@ -12,7 +12,7 @@ See https://docs.aws.amazon.com/serverless-application-model/latest/developergui
 
 - Install the AWS Toolkit for VSCode
 
--
+- Run the VSCode debug config "KickerFunction"
 
 # Deploying
 
@@ -20,7 +20,9 @@ See https://docs.aws.amazon.com/serverless-application-model/latest/developergui
 
 - Build First `sam build`
 
-- Test locally `sam local start-api`
+- Start local DynamoDB `docker-compose up`
+
+- Test locally `sam local start-api --profile personal`
 
 - When all is good deploy `sam deploy --profile personal`
 

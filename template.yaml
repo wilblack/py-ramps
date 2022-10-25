@@ -17,10 +17,65 @@ Parameters:
   BucketName:
     Type: String
     Default: mtb-ramps
+  Stage:
+    Type: String
+    Default: dev
+  Domain:
+    Type: String
+    Default: blackwoodmtb.com
+  KickerTableName:
+    Type: String
+    Default: Kicker
 
 Resources:
+  ApiCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub sam-api-${Stage}.${Domain}
+      ValidationMethod: DNS
+
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Stage
+      Domain:
+        DomainName: !Sub sam-api-${Stage}.${Domain}
+        CertificateArn: !Ref ApiCertificate
+        Route53:
+          HostedZoneName: !Sub ${Domain}. # NOTE: The period at the end is required
+
+  # KickerStatsFunction:
+  #   Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  #   Properties:
+  #     CodeUri: kicker/
+  #     Handler: app.lambda_handler
+  #     Runtime: python3.9
+  #     Environment:
+  #       Variables:
+  #         ENV: dev
+  #         TABLE: Kicker
+
+  #     Architectures:
+  #       - x86_64
+  #     MemorySize: 128
+  #     Policies:
+  #       - S3CrudPolicy: # adds this policy to the MtbRamps-KickerFunctionRole as KickerFunctionRolePolicy0
+  #           BucketName: !Sub "${BucketName}"
+  #     Events:
+  #       KickerApi:
+  #         Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+  #         Properties:
+  #           Path: /kicker
+  #           Method: get
+  #           RestApiId: !Ref ApiGatewayApi
+  #           RequestParameters:
+  #             - method.request.querystring.angle:
+  #                 Required: true
+  #             - method.request.querystring.height:
+  #                 Required: true
+
   KickerFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
       CodeUri: kicker/
       Handler: app.lambda_handler
@@ -34,14 +89,17 @@ Resources:
         - x86_64
       MemorySize: 128
       Policies:
-        - S3CrudPolicy: # adds this policy to the MtbRamps-KickerFunctionRole as KickerFunctionRolePolicy0
+        - S3CrudPolicy:
             BucketName: !Sub "${BucketName}"
+        - DynamoDBCrudPolicy:
+            TableName: !Sub "${KickerTableName}"
       Events:
         KickerApi:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /kicker
             Method: get
+            RestApiId: !Ref ApiGatewayApi
             RequestParameters:
               - method.request.querystring.angle:
                   Required: true
@@ -53,10 +111,10 @@ Resources:
   #   Properties:
   #     BucketName: !Sub "${BucketName}"
 
-  KickerTable:
-    Type: AWS::Serverless::SimpleTable
-    Properties:
-      TableName: Kicker
+  # KickerTable:
+  #   Type: AWS::Serverless::SimpleTable
+  #   Properties:
+  #     TableName: Kicker
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
@@ -64,7 +122,7 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   KickerApi:
     Description: "API Gateway endpoint URL"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/kicker/?angle=60&height=7"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/kicker/"
   KickerApiFunction:
     Description: "Kicker Lambda Function ARN"
     Value: !GetAtt KickerFunction.Arn
