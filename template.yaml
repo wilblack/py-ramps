@@ -88,7 +88,7 @@ Resources:
       Architectures:
         - x86_64
       MemorySize: 128
-      Policies:
+      Policies: # Policys for the executation role
         - S3CrudPolicy:
             BucketName: !Sub "${BucketName}"
         - DynamoDBCrudPolicy:
