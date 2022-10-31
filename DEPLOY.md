@@ -32,7 +32,7 @@ See https://docs.aws.amazon.com/serverless-application-model/latest/developergui
 `aws lambda list-functions --profile personal`
 
 **Invoke Function**
-`aws lambda invoke --profile personal --function-name padding-KickerFunction-iEjL2UkRuFKS --cli-binary-format raw-in-base64-out --payload '{"queryStringParameters": {"angle": "55","height": "6"}}' response.json`
+`aws lambda invoke --profile personal --function-name padding-KickerFunction-iEjL2UkRuFKS --cli-binary-format raw-in-base64-out --payload '{"queryStringParameters": {"angle": "55","height": "6"}}' output/response.json`
 
 # CI/CD SEtup
 
