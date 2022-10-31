@@ -88,7 +88,7 @@ Resources:
       Architectures:
         - x86_64
       MemorySize: 128
-      Policies:
+      Policies: # Policys for the executation role
         - S3CrudPolicy:
             BucketName: !Sub "${BucketName}"
         - DynamoDBCrudPolicy:
@@ -111,10 +111,10 @@ Resources:
   #   Properties:
   #     BucketName: !Sub "${BucketName}"
 
-  # KickerTable:
-  #   Type: AWS::Serverless::SimpleTable
-  #   Properties:
-  #     TableName: Kicker
+  KickerTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: !Sub "${KickerTableName}"
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function

@@ -60,6 +60,13 @@ class RampBase():
 
     def __init__(self, config: BaseConfig):
         self.env = os.getenv("ENV")
+        self.padding = {
+            "top": floor(self.inches(12.0 * 1)),
+            "bottom": floor(self.inches(12.0 * 1)),
+            "right": floor(self.inches(12.0 * 1)),
+            "left": floor(self.inches(12.0 * 1))
+        }
+
         self.config = config
         self.stats = {}
         self.out_path = "output"
@@ -129,18 +136,20 @@ class RampBase():
         while delta_x < self.X:
             label_ft = delta_x / 12.0 / self.config.pixels_per_inch
             label = f"{label_ft:.0f} (ft) [{delta_x}]"
-            self.draw.line([(delta_x, 0), (delta_x, self.Y)],
+            x = delta_x + self.padding["left"]
+            self.draw.line([(x, 0), (x, self.Y)],
                            fill='grey', width=LINE_WIDTH_THIN)
-            self.draw.text((delta_x + 20, delta_y * 0.05),
+            self.draw.text((x + 20, delta_y * 0.05),
                            label, (0, 0, 0), font=font)
             delta_x = delta_x + 12.0 * self.config.pixels_per_inch
 
-        while delta_y < self.Y:
+        while delta_y <= self.Y:
+            y = delta_y + self.padding["bottom"]
             label_ft = (self.Y - delta_y) / 12.0 / self.config.pixels_per_inch
-            label = f"{label_ft:.0f} (ft) [{delta_y}]"
-            self.draw.line([(0, delta_y), (self.X, delta_y)],
+            label = f"{label_ft:.0f} (ft) [{y}]"
+            self.draw.line([(0, y), (self.X, y)],
                            fill='grey', width=LINE_WIDTH_THIN)
-            self.draw.text((20, delta_y), label, (0, 0, 0), font=font)
+            self.draw.text((20, y), label, (0, 0, 0), font=font)
             delta_y = delta_y + 12.0 * self.config.pixels_per_inch
 
     def rotate(self, point, angle):
@@ -231,11 +240,10 @@ class RampBase():
         table = db.Table(table_name)  # type: ignore
         payload = {**stats, "id": str(uuid.uuid4())}
         item = json.loads(json.dumps(payload), parse_float=Decimal)
-        response = table.put_item(  # type: ignore
+        table.put_item(  # type: ignore
             Item=item
         )
-
-        print(response)
+        
         return payload["id"]
 
     def save_image(self):
