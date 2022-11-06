@@ -88,7 +88,7 @@ Resources:
       Architectures:
         - x86_64
       MemorySize: 128
-      Policies: # Policys for the executation role
+      Policies: # Policies for the execution role
         - S3CrudPolicy:
             BucketName: !Sub "${BucketName}"
         - DynamoDBCrudPolicy:
@@ -105,16 +105,17 @@ Resources:
                   Required: true
               - method.request.querystring.height:
                   Required: true
-  # MtbRampsBucket:
-  #   Type: "AWS::S3::Bucket"
-  #   DeletionPolicy: "Retain"
-  #   Properties:
-  #     BucketName: !Sub "${BucketName}"
+  MtbRampsBucket:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: "Retain"
+    Properties:
+      BucketName: !Sub "${BucketName}-${Stage}"
 
   KickerTable:
     Type: AWS::Serverless::SimpleTable
+    DeletionPolicy: "Retain"
     Properties:
-      TableName: !Sub "${KickerTableName}"
+      TableName: !Sub "${KickerTableName}-${Stage}"
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
