@@ -41,7 +41,7 @@ def degree_to_radian(degrees: float) -> float:
     return degrees * TO_RADIANS
 
 
-BUCKET_NAME = "mtb-ramps"
+BUCKET_NAME = "mtb-ramps-dev"
 
 
 class BaseConfig():

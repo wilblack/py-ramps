@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw
 
 from ramp_base import (BaseConfig, RampBase, dist, format_float,
                        radian_to_degree)
+from ramp_math import kicker_from_angle_and_height
 
 
 class KickerConfig(BaseConfig):
@@ -52,8 +53,15 @@ class Kicker(RampBase):
                 theta] = self.compute_height(config.angle_radian, config.radius_inches)
         elif (config.height_inches):
             print(f"config.height_inches {config.height_inches}")
-            [self.height_inches, self.length_inches, self.radius_inches,
-                theta] = self.compute_radius(config.angle_radian, config.height_inches)
+            self.geo = kicker_from_angle_and_height(config.angle_degree, config.height_inches * 12.0)
+            self.height_inches = self.geo["height"]
+            self.length_inches = self.geo["length"]
+            self.radius_inches = self.geo["radius"]
+            theta = theta = math.pi / 2.0 - self.geo["angle"]
+
+            # [self.height_inches, self.length_inches, self.radius_inches,
+            #     theta] = self.compute_radius(config.angle_radian, config.height_inches)
+            
         else:
             raise Exception("You must provide a radius or a height in inches")
 
@@ -62,8 +70,6 @@ class Kicker(RampBase):
         self.radius_feet = self.radius_inches / 12.0
         self.theta_radian = theta
         self.theta_degree = self.theta_radian * 180.0 / math.pi
-
-
 
     
         self.X = int(self.length_feet * 12 * config.pixels_per_inch)
@@ -83,7 +89,7 @@ class Kicker(RampBase):
 
         print(f"Height: {self.height_inches:.1f} Length: {self.length_feet:.1f} Radius: {self.radius_feet:.1f} Angle: {config.angle_degree} Theta: {self.theta_degree: .1f}")
 
-        self.stats = {
+        self.stats.update({
             "height_feet": format_float(self.height_feet),
             "height_inches": format_float(self.height_inches),
             "length_feet": format_float(self.length_feet),
@@ -94,7 +100,7 @@ class Kicker(RampBase):
             "takeoff_angle_radians": format_float(self.config.angle_radian),
             "arclength_inches": format_float(self.config.angle_radian * self.radius_inches),
             "arclength_feet": format_float(self.config.angle_radian * self.radius_feet),
-        }
+        })
 
         print(json.dumps(self.stats))
 
@@ -143,6 +149,10 @@ class Kicker(RampBase):
 
         if self.config.show_frame:
             self.draw_frame()
+            text_rows.extend([
+                f"Left Frame Board Bottom Length: {self.stats['left_board_bottom_length']}",
+                f"Left Frame Board Top Length: {self.stats['left_board_top_length']}"
+            ])
 
     def save(self) -> str:
         return self._create("Kicker", self.stats)
@@ -169,16 +179,16 @@ class Kicker(RampBase):
         mid = self.get_midpoint()
         
         # Bottom left beam
-        lt = (self.curve_x[0], self.curve_y[0])
-        rt = (mid["x"], mid["y"])
-        length = dist(lt, rt)
-        angle_radian = math.atan((rt[1] - lt[1]) / (rt[0] - lt[0]))
+        b1_lt = (self.curve_x[0], self.curve_y[0])
+        b1_rt = (mid["x"], mid["y"])
+        length = dist(b1_lt, b1_rt)
+        angle_radian = math.atan((b1_rt[1] - b1_lt[1]) / (b1_rt[0] - b1_lt[0]))
         if self.config.debug:
             print(
-            f"[draw_frame] length {length}, angle: {radian_to_degree(angle_radian)}, lt: {lt}, width: {width}")
-        self.render_beam(lt, length, width, angle_radian)
+            f"[draw_frame] length {length}, angle: {radian_to_degree(angle_radian)}, b1_lt: {b1_lt}, width: {width}")
+        self.render_beam(b1_lt, length, width, angle_radian)
 
-        # Top right beam
+        # Top right beam 
         lt = (mid["x"], mid["y"])
         rt = (self.curve_x[-1], self.curve_y[-1])
         length = dist(lt, rt)
