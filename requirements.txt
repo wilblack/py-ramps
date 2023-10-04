@@ -1,3 +1,3 @@
-Pillow==9.2.0
+Pillow==10.0.1
 boto3==1.24.86
 autopep8==1.7.0
